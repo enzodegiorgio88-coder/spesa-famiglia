@@ -346,19 +346,7 @@ header p { font-size:11px; opacity:0.65; }
   cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,107,0.4);
 }
 </style>
-<!-- OneSignal SDK -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer=""></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "6181803b-9cf7-494c-8a8a-d22c6584c065",
-      notifyButton: { enable: false },
-      allowLocalhostAsSecureOrigin: true,
-    });
-  });
-</script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=160605" defer=""></script></head>
+</head>
 <body>
 
 <!-- LOGIN -->
@@ -945,7 +933,7 @@ function makeRow(col, i, item) {
   const prBtn = document.createElement('button');
   prBtn.className='priority-btn'+(item.urgent?' urgent':'');
   prBtn.textContent=item.urgent?'🔴 Urgente':'⚪ Normale';
-  prBtn.onclick=()=>{ data[col][i].urgent=!data[col][i].urgent; { if(!data[col][i].actions)data[col][i].actions=[]; var _l=(data[col][i].urgent?'urgente':'tolto urgente')+' da '+currentUserName; if(!data[col][i].actions.length||data[col][i].actions[data[col][i].actions.length-1]!==_l)data[col][i].actions.push(_l); data[col][i].lastAction=data[col][i].actions.join(' · '); } if(data[col][i].urgent && data[col][i].text.trim()) inviaNotificaUrgente(data[col][i].text, currentUserName); saveToFirebase(); renderAll(); };
+  prBtn.onclick=()=>{ data[col][i].urgent=!data[col][i].urgent; { if(!data[col][i].actions)data[col][i].actions=[]; var _l=(data[col][i].urgent?'urgente':'tolto urgente')+' da '+currentUserName; if(!data[col][i].actions.length||data[col][i].actions[data[col][i].actions.length-1]!==_l)data[col][i].actions.push(_l); data[col][i].lastAction=data[col][i].actions.join(' · '); } saveToFirebase(); renderAll(); };
   extra.appendChild(qWrap); extra.appendChild(prBtn);
   const pWrap = document.createElement('div'); pWrap.className='price-wrap';
   const pIcon = document.createElement('span'); pIcon.className='price-icon'; pIcon.textContent='€';
@@ -1139,38 +1127,6 @@ function controllaNoviita() {
   document.getElementById('novitaScreen').classList.add('show');
 }
 
-// ── ONESIGNAL NOTIFICHE ────────────────────────────
-const NOTIFICHE_RELEASE = new Date('2020-01-01T00:00:00'); // TEST: sempre attivo
-const OS_APP_ID = '6181803b-9cf7-494c-8a8a-d22c6584c065';
-const OS_API_URL = 'https://onesignal.com/api/v1/notifications';
-
-async function initNotifiche() {
-  const ora = new Date();
-  if (ora < NOTIFICHE_RELEASE) return; // non ancora attive
-  if (!window.OneSignal) return;
-  try {
-    await OneSignal.Notifications.requestPermission();
-  } catch(e) { console.log('Notifiche non autorizzate'); }
-}
-
-async function inviaNotificaUrgente(nomeArticolo, nomeUtente) {
-  const ora = new Date();
-  if (ora < NOTIFICHE_RELEASE) return;
-  try {
-    await fetch(OS_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        app_id: OS_APP_ID,
-        included_segments: ['Total Subscriptions'],
-        headings: { it: '🛒 Spesa Famiglia' },
-        contents: { it: '🔴 ' + nomeUtente + ' ha segnato "' + nomeArticolo + '" come urgente!' },
-        url: 'https://spesa-famigliavincy.netlify.app',
-      })
-    });
-  } catch(e) { console.log('Notifica non inviata:', e); }
-}
-
 
 // ── TOUR GUIDATO ───────────────────────────────────
 const TOUR_STEPS = [
@@ -1310,7 +1266,6 @@ window.chiudiTour = function() {
     // Reset hole
     const hole = document.getElementById('holeRect');
     if (hole) { hole.setAttribute('width','0'); hole.setAttribute('height','0'); }
-    setTimeout(initNotifiche, 400);
   }, 300);
 };
 
@@ -1319,23 +1274,6 @@ window.chiudiNovita = () => {
   document.getElementById('novitaScreen').classList.remove('show');
   setTimeout(window.avviaTour, 450);
 };
-// ── SERVICE WORKER INLINE ──────────────────────────
-async function registraServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const swContent = `
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-`;
-    const blob = new Blob([swContent], { type: 'application/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    await navigator.serviceWorker.register(swUrl, { scope: '/' });
-  } catch(e) {
-    console.log('SW non registrato:', e);
-  }
-}
-
-// Registra SW e inizializza OneSignal
-registraServiceWorker();
 </script>
 
 </body></html>
